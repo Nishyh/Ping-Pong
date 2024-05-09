@@ -1,17 +1,16 @@
 from pygame import *
 from random import randint
-from time import time as timer
 
 font.init()
 font = font.Font(None, 36)
-won = font.render('YOU WON', True, (255,215,0))
-loss = font.render('YOU LOST!', True, (255,0,0))
+loss1 = font.render('YOU LOST! PLAYER 1', True, (255,215,0))
+loss2 = font.render('YOU LOST! PLAYER 2', True, (255,0,0))
 
 win_width = 700
 win_height = 500
 window = display.set_mode((win_width,win_height))
 display.set_caption = ('Ping-Pong')
-background_image = transform.scale(image.load('background_other.png'), (win_width, win_height))
+background_image = transform.scale(image.load('volley_court.webp'), (win_width, win_height))
 clock = time.Clock()
 running = True 
 finish = False
@@ -42,37 +41,71 @@ class Player(GameSprite):
             self.rect.y -= self.speed
 
         if keys[K_l] and self.rect.y < win_width - 80:
-            self.rect.y += self.speed    
-
-ball = GameSprite('ball.png', 350, 250,5,5, 5)
-
-paddle_right = Player('ok.png', 25, 250, 50, 90, 5)
-paddle_left = Player('ok.png', 580, 250, 50, 90, 5)
+            self.rect.y += self.speed   
 
 speed_x = 3
 speed_y = 3
+
+
+class Ball(GameSprite):
+    def update(self):
+        global speed_x, speed_y
+        self.rect.x += speed_x
+        self.rect.y += speed_y
+
+        if self.rect.y > win_height-50 or self.rect.y < 0:
+            speed_y *= -1
+
+
+ball = Ball('ball.png', 350, 250,5,5, 5)
+
+paddle_right = Player('shoyo.png', 25, 250, 70, 90, 5)
+paddle_left = Player('tsukushima.png', 580, 250, 70, 90, 5)
+
+# Countdown timer variables
+countdown_seconds = 10
+
+# Function to display countdown
+def display_countdown(countdown):
+    countdown_text = font.render("Game starts in: " + str(countdown), True, (0,0,0))
+    window.blit(countdown_text, (win_width // 2 - countdown_text.get_width() // 2, win_height // 2 - countdown_text.get_height() // 2))
+
+# Create a clock object to control the frame rate
+clock = time.Clock()
+
+white = (255,255,255)
+# Countdown loop
+for i in range(countdown_seconds, 0, -1):
+    window.fill(white)
+    display_countdown(i)
+    display.flip()
+    time.wait(1000)  # Wait for 1 second
 
 while running :
     for e in event.get():
         if e.type == QUIT :
             running = False
 
-    
 
     if finish == False :
         window.blit(background_image, (0,0))
         paddle_right.update_right()
         paddle_left.update_left()
-        ball.rect.x += speed_x
-        ball.rect.y += speed_y
+        ball.update()
 
-    if ball.rect.y > win_height-50 or ball.rect.y < 0:
-        speed_y -= 1
+    if sprite.collide_rect(paddle_right, ball) or sprite.collide_rect(paddle_left, ball):
+        speed_x *= -1
 
-    
+    if ball.rect.x < 0:
+        window.blit(loss1, (350,250))
+    if ball.rect.x > 750:
+        window.blit(loss2, (350,250))
+
     paddle_left.reset()
     paddle_right.reset()
     ball.reset()
 
+
     display.update()
     clock.tick(60)
+
